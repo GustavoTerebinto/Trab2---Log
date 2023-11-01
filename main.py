@@ -1,3 +1,4 @@
+import json
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
@@ -23,6 +24,15 @@ try:
     );
     """
   )
+
+  #Leitura do arquivo de metadados
+  def leitor_meta(file_name):
+    file = open(file_name, 'r')
+    data = json.load(file)["table"]
+    data_table = list(zip(data["id"], data["A"], data["B"]))
+
+    for i in data_table:
+      csr.execute(f"INSERT INTO data VALUES ({i[0]},{i[1]},{i[2]})")
 
   #Splita a leitura em linhas
   def leitor(file_name):
@@ -59,8 +69,16 @@ try:
     if edck in line:
       print("Fim de Checkpoint")
 
+  #Le o metadados
+  leitor_meta('Arquivos/metadado.json')
+
   #Le o Log
   leitor('Arquivos/log.txt')
+
+  #Exibe a tabela (exemplo)
+  csr.execute("""SELECT * FROM data""")
+  for table in csr.fetchall():
+    print(table)
 
 except (Exception, psycopg2.DatabaseError) as error:
    print(error)
