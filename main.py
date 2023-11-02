@@ -36,13 +36,18 @@ try:
 
   #Splita a leitura em linhas
   def leitor(file_name):
+      st_Tr = []; cm_Tr = []; ck_Tr = []
+      flag_ck = False
+      x = 0
+
       with open(file_name, 'r') as file:
           lines = file.readlines()
       #Analisa linha por linha
       for i in range(len(lines)-1,-1,-1):
-          analisa_log(lines,i)
+          x = analisa_log(lines, i, st_Tr, cm_Tr, ck_Tr, flag_ck)
+          if (x == 1): break
 
-  def analisa_log(input_list, index):
+  def analisa_log(input_list, index, start, commit, checkpoint, flag):
     #print(input_list[index])
     line = input_list[index]
 
@@ -51,23 +56,42 @@ try:
 
     #Id. Inicio de T
     if st in line:
-      print("Começo de Transação")
+      start.append(line[7]+line[8])
+      #print(start)
 
     #Id. T
     if t in line:
-      print("Transação")
+      tr = line[1]+line[2]
+
+      line_n = line.replace("<", "").replace(">", "")
+      if "\t\n" in line_n:
+         line_n = line.replace("<","").replace(">\t\n", "")
+      if "\n" in line_n:
+         line_n = line.replace("<","").replace(">\n", "")
+      line_tuple = line_n.split(",")
+      
+      #print(line_tuple)
+      if tr not in commit:
+         csr.execute(f"SELECT {line_tuple[2]}  FROM data WHERE id = {line_tuple[1]}")
+         dbval = csr.fetchone()[0]
+         if str(dbval) != str(line_tuple[3]):
+          csr.execute(f"UPDATE data SET {line_tuple[2]}={line_tuple[3]} WHERE id={line_tuple[1]}")
 
     #Id. Fim de T
     if cmm in line:
-      print("Fim de Transação")
+      commit.append(line[8]+line[9])
+      #print(commit)
 
     #Id. Inicio de de Checkpoint 
     if stck in line:
-      print("Começo de Checkpoint")
+      flag = True
+      tr = line.split('(')[1].replace(")>\n", "").replace(" ", '')
+      checkpoint = tr.split(",")
+
 
     #Id. Fim de Checkpoint
-    if edck in line:
-      print("Fim de Checkpoint")
+    if flag:
+      if len(checkpoint) == 0: return 1
 
   #Le o metadados
   leitor_meta('Arquivos/metadado.json')
