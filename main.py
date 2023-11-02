@@ -1,4 +1,5 @@
 import json
+import sys
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
@@ -46,6 +47,14 @@ try:
       for i in range(len(lines)-1,-1,-1):
           x = analisa_log(lines, i, st_Tr, cm_Tr, ck_Tr, flag_ck)
           if (x == 1): break
+
+      #Saida
+      for i in st_Tr:
+        if i not in cm_Tr:
+          print(f"Transação {i} realizou UNDO")
+      initpg.commit()
+      print("\nID\tA\tB")
+      csr.copy_to(sys.stdout, "data", sep="\t")
 
   def analisa_log(input_list, index, start, commit, checkpoint, flag):
     #print(input_list[index])
@@ -98,11 +107,6 @@ try:
 
   #Le o Log
   leitor('Arquivos/log.txt')
-
-  #Exibe a tabela (exemplo)
-  csr.execute("""SELECT * FROM data""")
-  for table in csr.fetchall():
-    print(table)
 
 except (Exception, psycopg2.DatabaseError) as error:
    print(error)
