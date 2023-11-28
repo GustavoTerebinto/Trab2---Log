@@ -80,7 +80,7 @@ try:
       line_tuple = line_n.split(",")
       
       #print(line_tuple)
-      if tr not in commit:
+      if tr in commit:
          csr.execute(f"SELECT {line_tuple[2]}  FROM data WHERE id = {line_tuple[1]}")
          dbval = csr.fetchone()[0]
          if str(dbval) != str(line_tuple[3]):
